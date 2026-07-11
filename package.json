@@ -1,40 +1,26 @@
 {
-  "name": "@dietrichgebert/ponytail",
-  "version": "4.8.4",
-  "description": "Lazy senior dev mode for AI agents. The best code is the code you never wrote.",
-  "keywords": ["opencode-plugin", "opencode", "ponytail", "pi-package", "pi", "skills", "qoder"],
+  "name": "@x4cc3/sweep",
+  "version": "0.1.0",
+  "description": "Lazy senior dev mode for the Pi agent harness. The best code is the code you never wrote.",
+  "keywords": ["pi-package", "pi", "skills", "sweep", "lazy", "yagni"],
   "license": "MIT",
   "author": {
     "name": "Dietrich Gebert",
-    "url": "https://github.com/DietrichGebert"
+    "url": "https://github.com/x4cc3"
   },
-  "homepage": "https://github.com/DietrichGebert/ponytail",
+  "homepage": "https://github.com/x4cc3/sweep",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DietrichGebert/ponytail.git"
-  },
-  "bugs": {
-    "url": "https://github.com/DietrichGebert/ponytail/issues"
-  },
-  "main": "./.opencode/plugins/ponytail.mjs",
-  "exports": {
-    ".": "./.opencode/plugins/ponytail.mjs",
-    "./plugin": "./.opencode/plugins/ponytail.mjs"
+    "url": "git+https://github.com/x4cc3/sweep.git"
   },
   "files": [
-    "AGENTS.md",
     "hooks/",
     "skills/",
-    ".opencode/",
-    ".qoder/",
-    ".qoder-plugin/",
     "pi-extension/",
-    "scripts/uninstall.js",
-    "assets/",
     "LICENSE"
   ],
   "scripts": {
-    "test": "node --test tests/*.test.js && npm test --prefix pi-extension && npm test --prefix ponytail-mcp"
+    "test": "npm test --prefix pi-extension"
   },
   "pi": {
     "extensions": ["./pi-extension/index.js"],
@@ -44,4 +30,3 @@
     "access": "public"
   }
 }
-

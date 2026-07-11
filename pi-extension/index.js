@@ -11,15 +11,15 @@ const {
   normalizePersistedMode,
   isDeactivationCommand,
   writeDefaultMode,
-} = require("../hooks/ponytail-config.js");
-const { getPonytailInstructions, filterSkillBodyForMode } = require("../hooks/ponytail-instructions.js");
+} = require("../hooks/sweep-config.js");
+const { getSweepInstructions, filterSkillBodyForMode } = require("../hooks/sweep-instructions.js");
 
 export { filterSkillBodyForMode };
 export const readDefaultMode = getDefaultMode;
 export const readQuietStartup = getQuietStartup;
 
 const RUNTIME_MODE_LIST = RUNTIME_MODES.join("|");
-const PONYTAIL_COMMAND_DESCRIPTION = `Set mode: ${RUNTIME_MODE_LIST}. Commands: status, default <mode>`;
+const SWEEP_COMMAND_DESCRIPTION = `Set mode: ${RUNTIME_MODE_LIST}. Commands: status, default <mode>`;
 
 export function resolveSessionMode(entries, fallbackMode = DEFAULT_MODE) {
   const fallback = normalizePersistedMode(fallbackMode) || DEFAULT_MODE;
@@ -27,7 +27,7 @@ export function resolveSessionMode(entries, fallbackMode = DEFAULT_MODE) {
 
   for (let i = entries.length - 1; i >= 0; i -= 1) {
     const entry = entries[i];
-    if (entry?.type !== "custom" || entry?.customType !== "ponytail-mode") continue;
+    if (entry?.type !== "custom" || entry?.customType !== "sweep-mode") continue;
 
     const mode = normalizePersistedMode(entry?.data?.mode);
     if (mode) return mode;
@@ -36,7 +36,7 @@ export function resolveSessionMode(entries, fallbackMode = DEFAULT_MODE) {
   return fallback;
 }
 
-export function parsePonytailCommand(text, defaultMode = DEFAULT_MODE) {
+export function parseSweepCommand(text, defaultMode = DEFAULT_MODE) {
   const fallback = normalizePersistedMode(defaultMode) || DEFAULT_MODE;
   const normalizedText = String(text || "").trim().toLowerCase();
 
@@ -49,7 +49,7 @@ export function parsePonytailCommand(text, defaultMode = DEFAULT_MODE) {
   if (primary === "status") return { type: "status" };
 
   if (primary === "default") {
-    // ponytail: a default must be a runtime level; review is session-only (#377).
+    // sweep: a default must be a runtime level; review is session-only (#377).
     const mode = normalizeMode(secondary);
     return mode ? { type: "set-default", mode } : { type: "invalid", reason: "invalid-default-mode" };
   }
@@ -60,32 +60,27 @@ export function parsePonytailCommand(text, defaultMode = DEFAULT_MODE) {
 
 export { writeDefaultMode };
 
-export default function ponytailExtension(pi) {
+export default function sweepExtension(pi) {
   let currentMode = DEFAULT_MODE;
   let configuredDefaultMode = getDefaultMode();
   let hideStatus = getHideStatus();
-  let isActive = false;
   let lastCtx = null;
 
   // -- Status bar --
   function syncStatus(ctx) {
     if (ctx) lastCtx = ctx;
     const c = ctx || lastCtx;
-    // ponytail: hide the indicator but keep the ruleset active (#324).
+    // sweep: hide the indicator but keep the ruleset active (#324).
     if (hideStatus) return;
     if (!c?.ui?.setStatus) return;
-    // ponytail: try/catch guards against pi-web theme proxy throwing before initTheme
+    // sweep: try/catch guards against pi-web theme proxy throwing before initTheme
     let theme;
     try { theme = c.ui.theme; if (!theme?.fg) return; } catch { return; }
     if (currentMode === "off") {
-      c.ui.setStatus("ponytail", "");
+      c.ui.setStatus("sweep", "");
       return;
     }
-    const levelIcons = { lite: "🌿", full: "⚡", ultra: "🔥" };
-    const icon = levelIcons[currentMode] || "";
-    const label = currentMode.toUpperCase();
-    const indicator = isActive ? theme.fg("accent", "●") : theme.fg("dim", "○");
-    c.ui.setStatus("ponytail", indicator + " 🐴 " + theme.fg("muted", "ponytail: ") + theme.fg("text", icon + " " + label));
+    c.ui.setStatus("sweep", theme.fg("muted", "sweep: ") + theme.fg("text", currentMode));
   }
 
   const setMode = (mode, ctx) => {
@@ -93,9 +88,9 @@ export default function ponytailExtension(pi) {
     if (!normalized) return;
 
     currentMode = normalized;
-    pi.appendEntry("ponytail-mode", { mode: normalized });
+    pi.appendEntry("sweep-mode", { mode: normalized });
     syncStatus(ctx);
-    ctx?.ui?.notify?.(`Ponytail mode set to ${normalized}.`, "info");
+    ctx?.ui?.notify?.(`Sweep mode set to ${normalized}.`, "info");
   };
 
   const sendAlias = (skillName, args, ctx) => {
@@ -111,13 +106,13 @@ export default function ponytailExtension(pi) {
     pi.sendUserMessage(message);
   };
 
-  pi.registerCommand("ponytail", {
-    description: PONYTAIL_COMMAND_DESCRIPTION,
+  pi.registerCommand("sweep", {
+    description: SWEEP_COMMAND_DESCRIPTION,
     handler: async (args, ctx) => {
-      const parsed = parsePonytailCommand(args, configuredDefaultMode);
+      const parsed = parseSweepCommand(args, configuredDefaultMode);
 
       if (parsed.type === "status") {
-        ctx?.ui?.notify?.(`Ponytail: current ${currentMode} • default ${configuredDefaultMode}`, "info");
+        ctx?.ui?.notify?.(`Sweep: current ${currentMode} • default ${configuredDefaultMode}`, "info");
         return;
       }
 
@@ -127,7 +122,7 @@ export default function ponytailExtension(pi) {
           if (written) {
             configuredDefaultMode = getDefaultMode();
             const message = configuredDefaultMode === written
-              ? `Default Ponytail mode set to ${written}.`
+              ? `Default Sweep mode set to ${written}.`
               : `Saved default ${written}, but env override keeps default at ${configuredDefaultMode}.`;
             ctx?.ui?.notify?.(message, "info");
           }
@@ -142,33 +137,33 @@ export default function ponytailExtension(pi) {
         return;
       }
 
-      ctx?.ui?.notify?.("Unknown or unsupported /ponytail mode.", "warning");
+      ctx?.ui?.notify?.("Unknown or unsupported /sweep mode.", "warning");
     },
   });
 
-  pi.registerCommand("ponytail-review", {
-    description: "Run /skill:ponytail-review",
-    handler: (_args, ctx) => sendAlias("/skill:ponytail-review", "", ctx),
+  pi.registerCommand("sweep-review", {
+    description: "Run /skill:sweep-review",
+    handler: (_args, ctx) => sendAlias("/skill:sweep-review", "", ctx),
   });
 
-  pi.registerCommand("ponytail-audit", {
-    description: "Run /skill:ponytail-audit",
-    handler: (_args, ctx) => sendAlias("/skill:ponytail-audit", "", ctx),
+  pi.registerCommand("sweep-audit", {
+    description: "Run /skill:sweep-audit",
+    handler: (_args, ctx) => sendAlias("/skill:sweep-audit", "", ctx),
   });
 
-  pi.registerCommand("ponytail-gain", {
-    description: "Run /skill:ponytail-gain",
-    handler: (_args, ctx) => sendAlias("/skill:ponytail-gain", "", ctx),
+  pi.registerCommand("sweep-gain", {
+    description: "Run /skill:sweep-gain",
+    handler: (_args, ctx) => sendAlias("/skill:sweep-gain", "", ctx),
   });
 
-  pi.registerCommand("ponytail-debt", {
-    description: "Run /skill:ponytail-debt",
-    handler: (_args, ctx) => sendAlias("/skill:ponytail-debt", "", ctx),
+  pi.registerCommand("sweep-debt", {
+    description: "Run /skill:sweep-debt",
+    handler: (_args, ctx) => sendAlias("/skill:sweep-debt", "", ctx),
   });
 
-  pi.registerCommand("ponytail-help", {
-    description: "Run /skill:ponytail-help",
-    handler: (_args, ctx) => sendAlias("/skill:ponytail-help", "", ctx),
+  pi.registerCommand("sweep-help", {
+    description: "Run /skill:sweep-help",
+    handler: (_args, ctx) => sendAlias("/skill:sweep-help", "", ctx),
   });
 
   pi.on("input", async (event) => {
@@ -187,17 +182,15 @@ export default function ponytailExtension(pi) {
     currentMode = resolveSessionMode(entries, configuredDefaultMode);
     syncStatus(ctx);
     if (!getQuietStartup()) {
-      ctx?.ui?.notify?.(`Ponytail loaded: ${currentMode}`, "info");
+      ctx?.ui?.notify?.(`Sweep loaded: ${currentMode}`, "info");
     }
   });
 
   pi.on("agent_start", async (_event, ctx) => {
-    isActive = true;
     syncStatus(ctx);
   });
 
   pi.on("agent_end", async (_event, ctx) => {
-    isActive = false;
     syncStatus(ctx);
   });
 
@@ -206,6 +199,6 @@ export default function ponytailExtension(pi) {
     // Guard a null/undefined event or a missing systemPrompt: don't crash, and
     // don't prepend the literal string "undefined" to the prompt (#439, #440).
     const base = event?.systemPrompt ? `${event.systemPrompt}\n\n` : "";
-    return { systemPrompt: `${base}${getPonytailInstructions(currentMode)}` };
+    return { systemPrompt: `${base}${getSweepInstructions(currentMode)}` };
   });
 }
