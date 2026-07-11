@@ -19,7 +19,7 @@ write flag files, or persist anything.
 | **Full** | `/sweep` | The ladder enforced: YAGNI → stdlib → native → one line → minimum. Default. |
 | **Ultra** | `/sweep ultra` | YAGNI extremist. Deletion before addition. Challenges requirements before building. |
 
-Level sticks until changed or session end.
+Level sticks until you change it.
 
 ## Skills
 

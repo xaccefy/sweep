@@ -115,6 +115,6 @@ test, YAGNI applies to tests too.
 
 Sweep governs what you build, not how you talk (pair with Caveman for
 terse prose). "stop sweep" / "normal mode": revert. Level persists until
-changed or session end.
+you change it.
 
 The shortest path to done is the right path.

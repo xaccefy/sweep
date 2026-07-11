@@ -89,6 +89,10 @@ export default function sweepExtension(pi) {
 
     currentMode = normalized;
     pi.appendEntry("sweep-mode", { mode: normalized });
+    // sweep: persist durably so the mode survives a fresh pi launch (session
+    // entries are per-session and not reloaded by a new process). Env override
+    // (SWEEP_DEFAULT_MODE) still wins via getDefaultMode().
+    writeDefaultMode(normalized);
     syncStatus(ctx);
     ctx?.ui?.notify?.(`Sweep mode set to ${normalized}.`, "info");
   };
