@@ -1,6 +1,6 @@
 {
   "name": "@xaccefy/sweep",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Lazy senior dev mode for the Pi agent harness. The best code is the code you never wrote.",
   "keywords": ["pi-package", "pi", "skills", "sweep", "lazy", "yagni"],
   "license": "MIT",
