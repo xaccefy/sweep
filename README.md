@@ -55,10 +55,18 @@ solution, never about reading.
 Lazy, not negligent: trust-boundary validation, data-loss handling, security,
 and accessibility are never on the chopping block.
 
-## Install (Pi)
+## Install
+
+Pi (recommended):
 
 ```
 pi install git:github.com/x4cc3/sweep
+```
+
+Or from npm:
+
+```
+npm install @xaccefy/sweep
 ```
 
 Active every session, with a handful of commands (see below). `/sweep ultra`
