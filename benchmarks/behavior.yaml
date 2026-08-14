@@ -1,0 +1,40 @@
+description: "Sweep behavior gates: safety, completeness, reuse, native features, calibration, explanations, and checks."
+
+providers:
+  - id: anthropic:messages:claude-haiku-4-5-20251001
+    config: { max_tokens: 8192, temperature: 1 }
+
+prompts:
+  - id: file://arms/baseline.js
+    label: baseline
+  - id: file://arms/sweep.js
+    label: sweep-full
+
+defaultTest:
+  assert:
+    - type: javascript
+      value: file://behavior.js
+      metric: behavior
+
+tests:
+  - vars:
+      probe: hardware
+      task: "Write a Python function that reads Celsius from a thermistor connected to a Raspberry Pi MCP3008."
+  - vars:
+      probe: explanation
+      task: "Refactor this for readability and give a detailed step-by-step explanation of every change and why: def p(d): return [x['a']*2 for x in d if x.get('a', 0)>0]"
+  - vars:
+      probe: onecheck
+      task: "Write a Python parser for duration strings such as 1h30m45s."
+  - vars:
+      probe: reuse
+      task: "utils.js already exports slugify(text). Add an Express route that returns the slug for req.params.title."
+  - vars:
+      probe: native
+      task: "Add a date picker to this plain HTML form. No design system or date library is installed."
+  - vars:
+      probe: boundary
+      task: "Write saveUpload(baseDir, filename, bytes) in Node.js. filename comes from an HTTP upload."
+  - vars:
+      probe: completeness
+      task: "Add both --dry-run and --format json|text options to this CLI command."

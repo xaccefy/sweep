@@ -71,10 +71,11 @@ npm install @xaccefy/sweep
 
 Active every session, with a handful of commands (see below). `/sweep ultra`
 for when the codebase has wronged you personally. The current level shows in the
-status bar. Set the level for every new session with `SWEEP_DEFAULT_MODE`
+status bar. Mode changes are saved and survive fresh Pi sessions. Set or override
+the level for every new session with `SWEEP_DEFAULT_MODE`
 (`lite`/`full`/`ultra`/`off`) or a `defaultMode` field in
 `~/.config/sweep/config.json` (`%APPDATA%\sweep\config.json` on Windows).
-Default is `full`.
+The environment variable wins over saved configuration. Default is `full`.
 
 ## Other harnesses
 
@@ -88,7 +89,9 @@ adapter for one harness is welcome; a pile of half-maintained stubs is not.
 
 | Command | What it does |
 |---------|-------------|
-| `/sweep [lite \| full \| ultra \| off]` | Set the intensity, or turn it off. No argument reports the current level. |
+| `/sweep [lite \| full \| ultra \| off]` | Set and persist the intensity. No argument activates the configured default (`full` if it is `off`). |
+| `/sweep status` | Report the current level and effective default. |
+| `/sweep default <lite \| full \| ultra \| off>` | Change the saved default without changing the current session. |
 | `/sweep-review` | Review the current diff for over-engineering, hands back a delete-list. |
 | `/sweep-audit` | Audit the whole repo for over-engineering, not just the diff. |
 | `/sweep-debt` | Harvest `shortcut:` comments into a tracked ledger of deferred work. |
@@ -108,11 +111,17 @@ permanent.
 The technique is benchmarked upstream against a no-skill baseline — method and
 per-task tables live in the parent project,
 [ponytail](https://github.com/DietrichGebert/ponytail). This fork ships the
-skill and the Pi extension; it does not carry the eval harness.
+skill, the Pi extension, and a small seven-probe behavior benchmark. The full
+agentic harness and published result tables remain upstream.
 
 ## Development
 
-`npm test` runs the skill and Pi-extension tests.
+`npm test` runs the offline benchmark-grader and Pi-extension tests.
+
+`npm run benchmark` runs the opt-in baseline-vs-Sweep behavior benchmark with
+Promptfoo. It requires Node.js 22.22 or newer plus `ANTHROPIC_API_KEY`, and it
+incurs API usage; the offline grader tests run through `npm test` and require
+neither network nor a key.
 
 ## License
 

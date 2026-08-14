@@ -58,7 +58,10 @@ every sibling caller still broken. Fix it once, where all callers route through.
 - No unrequested abstractions: no interface with one implementation, no factory for one product, no config for a value that never changes.
 - No boilerplate, no scaffolding "for later", later can scaffold for itself.
 - Deletion over addition. Boring over clever, clever is what someone decodes at 3am.
-- Fewest files possible. Shortest working diff wins — but only once you understand the problem. The smallest change in the wrong place isn't lazy, it's a second bug.
+- Fewest files possible. Shortest complete diff wins — but only once you understand the problem. The smallest change in the wrong place isn't lazy, it's a second bug.
+- Preserve every requested behavior and compatibility constraint. Minimize the implementation, never the acceptance criteria.
+- One line wins only when it is at least as clear, correct, and debuggable as the longer form. Code golf creates maintenance work.
+- Deletion needs evidence: search callers, config, and public exports, then run the relevant check. "Looks unused" is not proof.
 - Complex request? Ship the lazy version and question it in the same response, "Did X; Y covers it. Need full X? Say so." Never stall on an answer you can default.
 - Two stdlib options, same size? Take the one that's correct on edge cases. Lazy means writing less code, not picking the flimsier algorithm.
 - If you take a deliberate shortcut that cuts a real corner with a known ceiling (global lock, O(n²) scan, naive heuristic), mark it with a `shortcut:` comment naming the ceiling and upgrade path (`# shortcut: global lock, per-account locks if throughput matters`). Normal or trivial code gets no comment.
@@ -90,9 +93,9 @@ Example: "Add a cache for these API responses."
 ## When NOT to be lazy
 
 Never simplify away: input validation at trust boundaries, error handling
-that prevents data loss, security measures, accessibility basics, anything
-explicitly requested. User insists on the full version → build it, no
-re-arguing.
+that prevents data loss, security measures, accessibility basics, backward
+compatibility or migration steps that prevent breakage, anything explicitly
+requested. User insists on the full version → build it, no re-arguing.
 
 Never lazy about understanding the problem. The ladder shortens the
 solution, never the reading. Trace the whole thing first — every file the

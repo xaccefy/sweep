@@ -13,6 +13,13 @@ description: >
 Review diffs for unnecessary complexity. One line per finding: location, what
 to cut, what replaces it. The diff's best outcome is getting shorter.
 
+## Verify
+
+1. Read the changed code and its surrounding contract.
+2. Search callers, exports, config, and tests before calling anything dead or speculative.
+3. Confirm the proposed stdlib/native replacement preserves the required behavior and compatibility.
+4. Report only provable cuts. Derive line estimates from the diff, not intuition.
+
 ## Format
 
 `L<line>: <tag> <what>. <replacement>.`, or `<file>:L<line>: ...` for
@@ -28,10 +35,10 @@ Tags:
 
 ## Examples
 
- "This EmailValidator class might be more complex than necessary, have you
+Bad: "This EmailValidator class might be more complex than necessary, have you
 considered whether all these validation rules are needed at this stage?"
 
- `L12-38: stdlib: 27-line validator class. "@" in email, 1 line, real validation is the confirmation mail.`
+Good: `L12-38: stdlib: custom dedupe loop. [...new Set(values)], 1 line.`
 
  `L4: native: moment.js imported for one format call. Intl.DateTimeFormat, 0 deps.`
 
@@ -43,7 +50,7 @@ considered whether all these validation rules are needed at this stage?"
 
 ## Scoring
 
-End with the only metric that matters: `net: -<N> lines possible.`
+End with the only metric that matters: `net: -<N> verified lines possible.`
 
 If there is nothing to cut, say `Lean already. Ship.` and stop.
 
@@ -53,5 +60,7 @@ Scope: over-engineering and complexity only. Correctness bugs, security holes,
 and performance are explicitly out of scope. Route them to a normal review
 pass, not this one. A single smoke test or `assert`-based
 self-check is the sweep minimum, not bloat, never flag it for deletion.
+Do not flag required validation, error handling, compatibility, accessibility,
+or observability as bloat unless you cite the equivalent mechanism replacing it.
 Does not apply the fixes, only lists them.
 "stop sweep-review" or "normal mode": revert to verbose review style.

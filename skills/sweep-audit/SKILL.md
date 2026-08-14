@@ -12,6 +12,14 @@ description: >
 sweep-review, repo-wide. Scan the whole tree instead of a diff. Rank
 findings biggest cut first.
 
+## Verify
+
+Start with dependency manifests and high-fan-out entry points. Search every
+candidate's callers, exports, config references, and tests before reporting it.
+Only flag an interface, factory, or wrapper when the repo proves it has one
+implementation or caller and no public compatibility role. A small
+single-purpose file is not over-engineering by itself.
+
 ## Tags
 
 Same as sweep-review:
@@ -25,17 +33,20 @@ Same as sweep-review:
 ## Hunt
 
 Deps the stdlib or platform already ships, single-implementation interfaces,
-factories with one product, wrappers that only delegate, files exporting one
-thing, dead flags and config, hand-rolled stdlib.
+factories with one product, wrappers that only delegate, dead flags and config,
+and hand-rolled stdlib. Require repository evidence for every candidate.
 
 ## Output
 
 One line per finding, ranked: `<tag> <what to cut>. <replacement>. [path]`.
-End with `net: -<N> lines, -<M> deps possible.` Nothing to cut: `Lean already. Ship.`
+End with `net: -<N> verified lines, -<M> deps possible.` Do not count speculative
+cuts. Nothing to cut: `Lean already. Ship.`
 
 ## Boundaries
 
 Scope: over-engineering and complexity only. Correctness bugs, security holes,
 and performance are explicitly out of scope. Route them to a normal review
-pass. Lists findings, applies nothing. One-shot.
+pass. Do not count required validation, error handling, compatibility,
+accessibility, tests, or observability as bloat. Lists findings, applies
+nothing. One-shot.
 "stop sweep-audit" or "normal mode" to revert.

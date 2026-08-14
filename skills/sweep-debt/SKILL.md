@@ -14,13 +14,14 @@ can't quietly become permanent.
 
 ## Scan
 
-Grep the repo for comment markers, skipping `node_modules`, `.git`, and build
-output:
+Search the repo for comment markers, skipping dependencies, generated output,
+and Sweep's own convention examples:
 
-`grep -rnE '(#|//) ?shortcut:' .`  (add other comment prefixes if your stack uses them)
+`rg -n --hidden -g '!node_modules/**' -g '!.git/**' -g '!dist/**' -g '!build/**' -g '!coverage/**' -g '!README*' -g '!skills/sweep*/SKILL.md' '(#|//|/\*|\*)\s*shortcut:' .`
 
 Each hit is one ledger row. The comment prefix keeps prose that merely mentions
-the convention out of the ledger.
+the convention out of the ledger. Discard quoted examples and generated files
+that survive the globs; they are documentation, not debt.
 
 ## Output
 
@@ -33,6 +34,9 @@ first. Then list every marker, grouped by file:
 The convention is `shortcut: <ceiling>, <upgrade path>`, so pull the ceiling
 and the trigger straight from the comment. Want an owner per row too? add
 `git blame -L<line>,<line>`.
+
+Count a trigger only when the comment states an observable threshold or event
+(`when`, `if`, `once`, a size/latency/load limit). "Improve later" has no trigger.
 
 End with `<N> markers, <M> with no trigger.` Nothing found: `No shortcut debt. Clean ledger.`
 

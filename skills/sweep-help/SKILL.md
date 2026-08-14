@@ -41,6 +41,10 @@ Say "stop sweep" or "normal mode". Resume anytime with `/sweep`.
 
 Default mode = `full`, auto-active every session. Change it:
 
+Every `/sweep <level>` change is saved for future sessions. Use
+`/sweep default <level>` to change the saved default without changing the
+current session, and `/sweep status` to show both values.
+
 **Environment variable** (highest priority):
 ```bash
 export SWEEP_DEFAULT_MODE=ultra
@@ -59,9 +63,9 @@ Resolution: env var > config file > `full`.
 ## Install (Pi)
 
 ```
-pi install git:github.com/DietrichGebert/sweep
+pi install git:github.com/x4cc3/sweep
 ```
 
 ## More
 
-Full docs + examples: https://github.com/DietrichGebert/sweep
+Full docs + examples: https://github.com/x4cc3/sweep

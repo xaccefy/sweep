@@ -6,6 +6,10 @@
 # Dependencies
 node_modules/
 
+# Promptfoo eval artifacts
+.promptfoo/
+benchmarks/output*
+
 # Python
 __pycache__/
 

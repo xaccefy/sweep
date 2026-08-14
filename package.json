@@ -1,6 +1,6 @@
 {
   "name": "@xaccefy/sweep",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Lazy senior dev mode for the Pi agent harness. The best code is the code you never wrote.",
   "keywords": ["pi-package", "pi", "skills", "sweep", "lazy", "yagni"],
   "license": "MIT",
@@ -17,10 +17,12 @@
     "hooks/",
     "skills/",
     "pi-extension/",
+    "benchmarks/",
     "LICENSE"
   ],
   "scripts": {
-    "test": "npm test --prefix pi-extension"
+    "test": "node --test benchmarks/*.test.js && npm test --prefix pi-extension",
+    "benchmark": "npx promptfoo@latest eval -c benchmarks/behavior.yaml --repeat 4"
   },
   "pi": {
     "extensions": ["./pi-extension/index.js"],

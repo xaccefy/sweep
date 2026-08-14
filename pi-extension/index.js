@@ -92,9 +92,19 @@ export default function sweepExtension(pi) {
     // sweep: persist durably so the mode survives a fresh pi launch (session
     // entries are per-session and not reloaded by a new process). Env override
     // (SWEEP_DEFAULT_MODE) still wins via getDefaultMode().
-    writeDefaultMode(normalized);
+    let persistenceError;
+    try {
+      if (writeDefaultMode(normalized)) configuredDefaultMode = getDefaultMode();
+    } catch (e) {
+      persistenceError = e;
+    }
     syncStatus(ctx);
-    ctx?.ui?.notify?.(`Sweep mode set to ${normalized}.`, "info");
+    const ui = ctx?.ui || lastCtx?.ui;
+    if (persistenceError) {
+      ui?.notify?.(`Sweep mode set to ${normalized} for this session, but failed to persist: ${persistenceError.message}`, "warning");
+    } else {
+      ui?.notify?.(`Sweep mode set to ${normalized}.`, "info");
+    }
   };
 
   const sendAlias = (skillName, args, ctx) => {

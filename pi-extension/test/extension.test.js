@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -43,8 +43,10 @@ function createCommandContext(overrides = {}) {
 function withTempConfig(fn) {
   const tempConfigHome = mkdtempSync(join(tmpdir(), "sweep-test-"));
   const previousXdg = process.env.XDG_CONFIG_HOME;
+  const previousDefault = process.env.SWEEP_DEFAULT_MODE;
   const previousHide = process.env.SWEEP_HIDE_STATUS;
   process.env.XDG_CONFIG_HOME = tempConfigHome;
+  delete process.env.SWEEP_DEFAULT_MODE;
   delete process.env.SWEEP_HIDE_STATUS;
 
   return Promise.resolve()
@@ -52,6 +54,8 @@ function withTempConfig(fn) {
     .finally(() => {
       if (previousXdg === undefined) delete process.env.XDG_CONFIG_HOME;
       else process.env.XDG_CONFIG_HOME = previousXdg;
+      if (previousDefault === undefined) delete process.env.SWEEP_DEFAULT_MODE;
+      else process.env.SWEEP_DEFAULT_MODE = previousDefault;
       if (previousHide === undefined) delete process.env.SWEEP_HIDE_STATUS;
       else process.env.SWEEP_HIDE_STATUS = previousHide;
       rmSync(tempConfigHome, { recursive: true, force: true });
@@ -75,10 +79,47 @@ test("/sweep updates session mode and injects instructions", async () => withTem
     customType: "sweep-mode",
     data: { mode: "ultra" },
   });
+  assert.deepEqual(
+    JSON.parse(readFileSync(join(process.env.XDG_CONFIG_HOME, "sweep", "config.json"), "utf8")),
+    { defaultMode: "ultra" },
+  );
 
   const result = await events.get("before_agent_start")({ systemPrompt: "BASE" }, ctx);
   assert.ok(result.systemPrompt.includes("SWEEP MODE ACTIVE"));
   assert.ok(result.systemPrompt.includes("ultra"));
+}));
+
+test("/sweep status reflects the newly persisted default", async () => withTempConfig(async () => {
+  const notices = [];
+  const { commands, events } = createPiHarness();
+  const ctx = createCommandContext({ ui: { notify: (message, level) => notices.push({ message, level }) } });
+
+  await events.get("session_start")({ reason: "startup" }, ctx);
+  await commands.get("sweep").handler("ultra", ctx);
+  await commands.get("sweep").handler("status", ctx);
+
+  assert.deepEqual(notices.at(-1), {
+    message: "Sweep: current ultra • default ultra",
+    level: "info",
+  });
+}));
+
+test("/sweep keeps the session mode when durable persistence fails", async () => withTempConfig(async () => {
+  const blockedConfigHome = join(process.env.XDG_CONFIG_HOME, "not-a-directory");
+  writeFileSync(blockedConfigHome, "", "utf8");
+  process.env.XDG_CONFIG_HOME = blockedConfigHome;
+
+  const notices = [];
+  const { commands, events } = createPiHarness();
+  const ctx = createCommandContext({ ui: { notify: (message, level) => notices.push({ message, level }) } });
+
+  await events.get("session_start")({ reason: "startup" }, ctx);
+  await commands.get("sweep").handler("lite", ctx);
+
+  const injected = await events.get("before_agent_start")({ systemPrompt: "BASE" }, ctx);
+  assert.match(injected.systemPrompt, /SWEEP MODE ACTIVE — level: lite/);
+  assert.equal(notices.at(-1).level, "warning");
+  assert.match(notices.at(-1).message, /set to lite for this session, but failed to persist/);
 }));
 
 test("before_agent_start guards missing event and missing systemPrompt (#439, #440)", async () => withTempConfig(async () => {
