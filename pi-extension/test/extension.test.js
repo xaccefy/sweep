@@ -338,3 +338,15 @@ test("saved defaultMode off is honored before session_start fires", async () => 
 
   assert.equal(injected, undefined, "sweep must not inject while the saved default is off");
 }));
+
+test("session start says nothing while sweep is off", async () => withTempConfig(async () => {
+  mkdirSync(join(process.env.XDG_CONFIG_HOME, "sweep"), { recursive: true });
+  writeFileSync(join(process.env.XDG_CONFIG_HOME, "sweep", "config.json"), JSON.stringify({ defaultMode: "off" }));
+  const notices = [];
+  const { events } = createPiHarness();
+  const ctx = createCommandContext({ ui: { notify: (message) => notices.push(message), setStatus() {}, theme: { fg: (_c, t) => t } } });
+
+  await events.get("session_start")({ reason: "startup" }, ctx);
+
+  assert.deepEqual(notices, [], "an off sweep must not announce itself at startup");
+}));

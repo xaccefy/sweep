@@ -217,7 +217,10 @@ export default function sweepExtension(pi) {
     hideStatus = getHideStatus();
     currentMode = resolveSessionMode(entries, configuredDefaultMode);
     syncStatus(ctx);
-    if (!getQuietStartup()) {
+    // sweep: an off sweep announces nothing — "Sweep loaded: off" is a toast
+    // about a tool that is not running. SWEEP_QUIET_STARTUP / config.quietStartup
+    // still silences the notice for the active levels too.
+    if (currentMode !== "off" && !getQuietStartup()) {
       ctx?.ui?.notify?.(`Sweep loaded: ${currentMode}`, "info");
     }
   });
