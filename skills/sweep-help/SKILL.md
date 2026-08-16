@@ -41,7 +41,8 @@ Say "stop sweep" or "normal mode". Resume anytime with `/sweep`.
 
 Default mode = `full`, auto-active every session. Change it:
 
-Every `/sweep <level>` change is saved for future sessions. Use
+Turning sweep off, or back on, is saved for future sessions. Changing the
+level while sweep is already on lasts for the current session only. Use
 `/sweep default <level>` to change the saved default without changing the
 current session, and `/sweep status` to show both values.
 

@@ -61,8 +61,12 @@ export function parseSweepCommand(text, defaultMode = DEFAULT_MODE) {
 export { writeDefaultMode };
 
 export default function sweepExtension(pi) {
-  let currentMode = DEFAULT_MODE;
+  // sweep: seed the live mode from the configured default, not the hardcoded
+  // DEFAULT_MODE. before_agent_start can fire before (or without) session_start,
+  // and a hardcoded 'full' there injected sweep even when the saved default was
+  // 'off'. session_start still re-resolves against the session entries.
   let configuredDefaultMode = getDefaultMode();
+  let currentMode = configuredDefaultMode;
   let hideStatus = getHideStatus();
   let lastCtx = null;
 
@@ -87,23 +91,41 @@ export default function sweepExtension(pi) {
     const normalized = normalizePersistedMode(mode);
     if (!normalized) return;
 
+    const previousDefault = configuredDefaultMode;
     currentMode = normalized;
     pi.appendEntry("sweep-mode", { mode: normalized });
-    // sweep: persist durably so the mode survives a fresh pi launch (session
-    // entries are per-session and not reloaded by a new process). Env override
-    // (SWEEP_DEFAULT_MODE) still wins via getDefaultMode().
+
+    // sweep: only the on/off switch is durable. Turning sweep off has to survive
+    // a fresh pi launch (session entries are per-session and are not reloaded by
+    // a new process), and so does turning it back on. But an intensity picked for
+    // one task must not silently become the global default for every future
+    // session in every project — /sweep default <level> is the explicit way to
+    // do that. Env override (SWEEP_DEFAULT_MODE) still wins via getDefaultMode().
+    const togglesActivation = normalized === "off" || previousDefault === "off";
     let persistenceError;
-    try {
-      if (writeDefaultMode(normalized)) configuredDefaultMode = getDefaultMode();
-    } catch (e) {
-      persistenceError = e;
+    let written = null;
+    if (togglesActivation) {
+      try {
+        written = writeDefaultMode(normalized);
+        if (written) configuredDefaultMode = getDefaultMode();
+      } catch (e) {
+        persistenceError = e;
+      }
     }
+
     syncStatus(ctx);
     const ui = ctx?.ui || lastCtx?.ui;
     if (persistenceError) {
       ui?.notify?.(`Sweep mode set to ${normalized} for this session, but failed to persist: ${persistenceError.message}`, "warning");
+    } else if (written) {
+      ui?.notify?.(
+        configuredDefaultMode === written
+          ? `Sweep mode set to ${written}, saved for future sessions.`
+          : `Sweep mode set to ${written}, but env override keeps the default at ${configuredDefaultMode}.`,
+        "info",
+      );
     } else {
-      ui?.notify?.(`Sweep mode set to ${normalized}.`, "info");
+      ui?.notify?.(`Sweep mode set to ${normalized} for this session (default stays ${configuredDefaultMode}).`, "info");
     }
   };
 

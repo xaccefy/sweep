@@ -71,8 +71,9 @@ npm install @xaccefy/sweep
 
 Active every session, with a handful of commands (see below). `/sweep ultra`
 for when the codebase has wronged you personally. The current level shows in the
-status bar. Mode changes are saved and survive fresh Pi sessions. Set or override
-the level for every new session with `SWEEP_DEFAULT_MODE`
+status bar. Turning sweep off — or back on — is saved and survives fresh Pi
+sessions; changing the intensity while it is already on applies to the current
+session only. Set or override the level for every new session with `SWEEP_DEFAULT_MODE`
 (`lite`/`full`/`ultra`/`off`) or a `defaultMode` field in
 `~/.config/sweep/config.json` (`%APPDATA%\sweep\config.json` on Windows).
 The environment variable wins over saved configuration. Default is `full`.
@@ -89,7 +90,7 @@ adapter for one harness is welcome; a pile of half-maintained stubs is not.
 
 | Command | What it does |
 |---------|-------------|
-| `/sweep [lite \| full \| ultra \| off]` | Set and persist the intensity. No argument activates the configured default (`full` if it is `off`). |
+| `/sweep [lite \| full \| ultra \| off]` | Set the intensity for this session, or turn sweep off. `off` (and turning it back on) is saved; a level change while it is already on is not. No argument activates the configured default (`full` if it is `off`). |
 | `/sweep status` | Report the current level and effective default. |
 | `/sweep default <lite \| full \| ultra \| off>` | Change the saved default without changing the current session. |
 | `/sweep-review` | Review the current diff for over-engineering, hands back a delete-list. |

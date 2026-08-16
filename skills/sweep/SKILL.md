@@ -15,6 +15,11 @@ description: >
   summaries, recipes).
 argument-hint: "[lite|full|ultra]"
 license: MIT
+# The extension injects this ruleset into the system prompt while a mode is
+# active, so the model must not also discover and read it on its own — that
+# duplicated the ruleset when sweep was on and applied it when sweep was off.
+# Hidden from the skills section; /skill:sweep still works for explicit use.
+disable-model-invocation: true
 ---
 
 # Sweep
@@ -117,7 +122,7 @@ test, YAGNI applies to tests too.
 ## Boundaries
 
 Sweep governs what you build, not how you talk (pair with Caveman for
-terse prose). "stop sweep" / "normal mode": revert. Level persists until
-you change it.
+terse prose). "stop sweep" / "normal mode": revert, and that stays off until
+you turn it back on. Level lasts the session.
 
 The shortest path to done is the right path.

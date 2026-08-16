@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -79,17 +79,16 @@ test("/sweep updates session mode and injects instructions", async () => withTem
     customType: "sweep-mode",
     data: { mode: "ultra" },
   });
-  assert.deepEqual(
-    JSON.parse(readFileSync(join(process.env.XDG_CONFIG_HOME, "sweep", "config.json"), "utf8")),
-    { defaultMode: "ultra" },
-  );
+  // An intensity picked for one task stays in that session: it must not become
+  // the saved default for every future session in every other project.
+  assert.equal(existsSync(join(process.env.XDG_CONFIG_HOME, "sweep", "config.json")), false);
 
   const result = await events.get("before_agent_start")({ systemPrompt: "BASE" }, ctx);
   assert.ok(result.systemPrompt.includes("SWEEP MODE ACTIVE"));
   assert.ok(result.systemPrompt.includes("ultra"));
 }));
 
-test("/sweep status reflects the newly persisted default", async () => withTempConfig(async () => {
+test("/sweep status keeps the saved default while the session mode changes", async () => withTempConfig(async () => {
   const notices = [];
   const { commands, events } = createPiHarness();
   const ctx = createCommandContext({ ui: { notify: (message, level) => notices.push({ message, level }) } });
@@ -99,15 +98,60 @@ test("/sweep status reflects the newly persisted default", async () => withTempC
   await commands.get("sweep").handler("status", ctx);
 
   assert.deepEqual(notices.at(-1), {
-    message: "Sweep: current ultra • default ultra",
+    message: "Sweep: current ultra • default full",
     level: "info",
   });
+}));
+
+test("/sweep off persists so a fresh launch stays off", async () => withTempConfig(async () => {
+  const { commands, events } = createPiHarness();
+  const ctx = createCommandContext();
+
+  await events.get("session_start")({ reason: "startup" }, ctx);
+  await commands.get("sweep").handler("off", ctx);
+
+  assert.deepEqual(
+    JSON.parse(readFileSync(join(process.env.XDG_CONFIG_HOME, "sweep", "config.json"), "utf8")),
+    { defaultMode: "off" },
+  );
+  assert.equal(await events.get("before_agent_start")({ systemPrompt: "BASE" }, ctx), undefined);
+}));
+
+test("turning sweep back on from off persists the level", async () => withTempConfig(async () => {
+  mkdirSync(join(process.env.XDG_CONFIG_HOME, "sweep"), { recursive: true });
+  writeFileSync(join(process.env.XDG_CONFIG_HOME, "sweep", "config.json"), JSON.stringify({ defaultMode: "off" }));
+  const { commands, events } = createPiHarness();
+  const ctx = createCommandContext();
+
+  await events.get("session_start")({ reason: "startup" }, ctx);
+  await commands.get("sweep").handler("lite", ctx);
+
+  assert.deepEqual(
+    JSON.parse(readFileSync(join(process.env.XDG_CONFIG_HOME, "sweep", "config.json"), "utf8")),
+    { defaultMode: "lite" },
+  );
+}));
+
+test("\"stop sweep\" persists off", async () => withTempConfig(async () => {
+  const { events } = createPiHarness();
+  const ctx = createCommandContext();
+
+  await events.get("session_start")({ reason: "startup" }, ctx);
+  await events.get("input")({ text: "stop sweep" });
+
+  assert.deepEqual(
+    JSON.parse(readFileSync(join(process.env.XDG_CONFIG_HOME, "sweep", "config.json"), "utf8")),
+    { defaultMode: "off" },
+  );
 }));
 
 test("/sweep keeps the session mode when durable persistence fails", async () => withTempConfig(async () => {
   const blockedConfigHome = join(process.env.XDG_CONFIG_HOME, "not-a-directory");
   writeFileSync(blockedConfigHome, "", "utf8");
   process.env.XDG_CONFIG_HOME = blockedConfigHome;
+  // Saved default off, so turning sweep back on is the durable half of the
+  // switch — the path that writes, and here the write cannot succeed.
+  process.env.SWEEP_DEFAULT_MODE = "off";
 
   const notices = [];
   const { commands, events } = createPiHarness();
@@ -281,4 +325,16 @@ test("SWEEP_HIDE_STATUS=0 does not hide the indicator", async () => withTempConf
   await events.get("agent_start")({}, ctx);
 
   assert.ok(statusWrites.length > 0, "0 must be treated as 'do not hide'");
+}));
+
+test("saved defaultMode off is honored before session_start fires", async () => withTempConfig(async () => {
+  mkdirSync(join(process.env.XDG_CONFIG_HOME, "sweep"), { recursive: true });
+  writeFileSync(join(process.env.XDG_CONFIG_HOME, "sweep", "config.json"), JSON.stringify({ defaultMode: "off" }));
+  const { events } = createPiHarness();
+
+  // before_agent_start can fire before (or without) session_start; the saved
+  // default must already be in effect instead of a hardcoded 'full'.
+  const injected = await events.get("before_agent_start")({ systemPrompt: "BASE" });
+
+  assert.equal(injected, undefined, "sweep must not inject while the saved default is off");
 }));

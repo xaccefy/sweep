@@ -71,7 +71,7 @@ function getFallbackInstructions(mode) {
     'security measures, accessibility basics, the calibration real hardware needs (the platform is never the spec ideal), anything the user explicitly asked to keep. ' +
     'Lazy code without its check is unfinished: non-trivial logic leaves ONE runnable check behind (assert-based demo/self-check or one small test file; no frameworks). Trivial one-liners need no test.\n\n' +
     '## Boundaries\n\n' +
-    'Sweep governs what you build, not how you talk. "stop sweep" or "normal mode": revert. Level persists until changed or session end.';
+    'Sweep governs what you build, not how you talk. "stop sweep" or "normal mode": revert, and that stays off until you turn it back on. Level lasts the session.';
 }
 
 function getSweepInstructions(mode) {
