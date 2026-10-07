@@ -20,3 +20,6 @@ sweep-*.gif
 
 # Claude Code local settings (machine-specific permission grants)
 .claude/settings.local.json
+
+# Pi runtime state (local case/codebase ledgers)
+.pi/
